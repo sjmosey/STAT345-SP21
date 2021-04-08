@@ -1,0 +1,161 @@
+---
+title: "Project Analysis"
+author: "Sam Mosiman"
+date: "4/6/2021"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r echo=FALSE, include=FALSE}
+# libraries used
+library(ggplot2)
+library(sentimentr)
+library(stringr)
+library(tidyverse)
+library(scales)
+library(tibble)
+library(dplyr)
+library(ggrepel)
+```
+
+
+```{r}
+# getting data
+moviedata <- read.csv("~/Stat 798 statistical computing/Projects/moviedata.csv")
+
+```
+
+##  Plotting Distributions
+```{r echo=FALSE}
+# plotting Average Rating
+avg_rating_plot = ggplot(moviedata, aes(x=rating)) +
+  geom_histogram(aes(y=..density..), binwidth=.1, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + xlim(7,10) + geom_vline(aes(xintercept=mean(rating, na.rm=T)), color="red", linetype="dashed", size=1) + ggtitle("Distribution of Average Ratings") + xlab("Average Rating")
+
+avg_rating_plot
+```
+
+The plot above consisits of a histogram plot with a density plot overlayed on it.  The histogram represnets actual counts while the density curve represents the same data with kernel smoothing aplied to better show the distribution of the ratings.  The red hashed line running through the plot represents the average rating for all movies (7.95).  This plot helps show that most of the movies on this list have a high rating (above 7) but it tends to taper off as the rating gets higher and higher with no movies having a rating of 10 (the highest was 9.4) which helps explain why it has the tail on the right.  
+
+```{r echo=FALSE}
+# plotting # of ratings
+number_of_ratings_plot = ggplot(moviedata, aes(x=num_ratings)) + geom_density() + ggtitle("Distribution of Number of ratings per movie") + xlab("Number of Ratings Rating")
+
+number_of_ratings_plot
+```
+The desnity plot above represents the density distribution for the number of ratings a movie has for all 999 movies on the list.  As with the average rating, we can see here that there is a right skew to the distribtuion (it is much more prevelant here) which makes sense as most movies on this list probably have the most ratings, with certain ones being outliers having an extra large amount of reviews.  Looking at the summary of the variable this seems to be the case with the minimum ratings for a movie being 25,167, the average number of ratings being 276,297, and the max number of ratings being 2,363,918
+
+
+```{r echo=FALSE}
+# Release Date distribution
+release_date_plot = ggplot(moviedata, aes(x=year)) +
+  geom_histogram(aes(y=..density..), binwidth=5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666")+ xlim(1915,2025) + ggtitle("Distribution of Movies by Release Date") + xlab("Year Released")
+
+release_date_plot
+```
+As opposed to the other plots made so far, when plotting movies by their year released, the distribution appears to be skewed left.  This would make sense though as IMDB's website hasn't been around all that long and it seems plausible that more recent movies get added pushing older ones off the list.
+
+```{r echo=FALSE}
+# gross revenue distribution
+options(scipen=999)
+revenue_plot = ggplot(moviedata, aes(x=gross)) + geom_density() + ggtitle("Distribution of Movies by Gross Revenue") + xlab("Gross Revenue in Dollars") + scale_x_continuous(labels = dollar)
+
+revenue_plot
+```
+The plot above showing the density curve for Gross Revenue has a strong skew to the right as would be expected with newer movies having excpetionally large gross revenues causing them to be outliers.  A look at the summary for 'gross' suggests this is probably the case as the max value is \$936,662,225\ dollars while the median is \$42,125,180\.  Assuming that the list doesn't use adjusted gross income, it would make sense that some of the more recent popular movies are the outliers causing the skew.  It should also be noted that 307 of the 999 entries did not contain a value for Gross Revenue, and thus weren't part of the plot.
+
+```{r echo=FALSE}
+# movie budget distribution
+budget_plot = ggplot(moviedata, aes(x=budget)) + geom_density() + ggtitle("Distribution of Movies by Budget") + xlab("Log Budget in Dollars") + scale_x_continuous(trans = "log10", labels = dollar)
+
+budget_plot
+```
+This plot had an incredibly large skew to the right with the median budget being $6,454,752 and the max budget being 10,000,000,000.  Upon seeing this value I went to the movie to see if there was an error and realized that the movie with the largest budget was a foreing film from korea whose budget was in South Korean Won.  Using a conversion the US dollar budget for this film was \$8,939,026\ putting it around the median.  This leads me to be skeptical of using film budgets for analysis as a decent number of the films are foreign and may have budgets in other currencys which could lead to skews or just outright wrong analysis.  
+
+## sentiment Analysis
+```{r echo=FALSE}
+# running a sentiment analysis using sentimentr
+sentiment1 = sentiment_by(moviedata$Review_1)
+sentiment2 = sentiment_by(moviedata$Review_2)
+sentiment3 = sentiment_by(moviedata$Review_3)
+sentiment4 = sentiment_by(moviedata$Review_4)
+sentiment5 = sentiment_by(moviedata$Review_5)
+sentiment6 = sentiment_by(moviedata$Review_6)
+sentiment7 = sentiment_by(moviedata$Review_7)
+sentiment8 = sentiment_by(moviedata$Review_8)
+sentiment9 = sentiment_by(moviedata$Review_9)
+sentiment10 = sentiment_by(moviedata$Review_10)
+sentiment11 = sentiment_by(moviedata$Review_11)
+sentiment12 = sentiment_by(moviedata$Review_12)
+sentiment13 = sentiment_by(moviedata$Review_13)
+sentiment14 = sentiment_by(moviedata$Review_14)
+sentiment15 = sentiment_by(moviedata$Review_15)
+sentiment16 = sentiment_by(moviedata$Review_16)
+sentiment17 = sentiment_by(moviedata$Review_17)
+sentiment18 = sentiment_by(moviedata$Review_18)
+sentiment19 = sentiment_by(moviedata$Review_19)
+sentiment20 = sentiment_by(moviedata$Review_20)
+sentiment21 = sentiment_by(moviedata$Review_21)
+sentiment22 = sentiment_by(moviedata$Review_22)
+sentiment23 = sentiment_by(moviedata$Review_23)
+sentiment24 = sentiment_by(moviedata$Review_24)
+sentiment25 = sentiment_by(moviedata$Review_25)
+
+
+# Averaging sentimetn for all reviews
+data = data.frame(Review1 = sentiment1$ave_sentiment,
+                  Review2 = sentiment2$ave_sentiment,
+                  Review3 = sentiment3$ave_sentiment,
+                  Review4 = sentiment4$ave_sentiment,
+                  Review5 = sentiment5$ave_sentiment,
+                  Review6 = sentiment6$ave_sentiment,
+                  Review7 = sentiment7$ave_sentiment,
+                  Review8 = sentiment8$ave_sentiment,
+                  Review9 = sentiment9$ave_sentiment,
+                  Review10 = sentiment10$ave_sentiment,
+                  Review11 = sentiment11$ave_sentiment,
+                  Review12 = sentiment12$ave_sentiment,
+                  Review13 = sentiment13$ave_sentiment,
+                  Review14 = sentiment14$ave_sentiment,
+                  Review15 = sentiment15$ave_sentiment,
+                  Review16 = sentiment16$ave_sentiment,
+                  Review17 = sentiment17$ave_sentiment,
+                  Review18 = sentiment18$ave_sentiment,
+                  Review19 = sentiment19$ave_sentiment,
+                  Review20 = sentiment20$ave_sentiment,
+                  Review21 = sentiment21$ave_sentiment,
+                  Review22 = sentiment22$ave_sentiment,
+                  Review23 = sentiment23$ave_sentiment,
+                  Review24 = sentiment24$ave_sentiment,
+                  Review25 = sentiment25$ave_sentiment)
+
+avg_sentiment = rowMeans(data, na.rm=TRUE)
+moviedata$avg_sentiment = avg_sentiment
+head(avg_sentiment)
+```
+
+This probably isn't how you wanted us to run a sentiment analysis but I found this cool package called sentimentr that runs a sentiment analysis using a general algorithm with the r lexicon packages dictionaries.  The cool thing I found about the sentimentr algorithm is that it takes into account valence shifters (negators, amplifiers, and de-amplifiers) meaning rather than just giving a certain sentiment if someone said a movie was "good", it takes into account if they said it was "really good." Moreover the algorithm is capable of understanding negators such as  "I don't like."  The algorithm definitely wasn't fast by any means (it took roughly 20 minutes for each set of reviews) but after reading reviews and comparing them to the sentiment score it gave, I think it did quite a good job all things considered.  The added variable to the moviedata data frame consists of the average sentiment compiled from all 25 reviews for each movie.  A negative value means on average the reviews were overall more negative, while a positive number means on average the reviews were overall positive.  It was actually kind of interesting to explore the algorithms people have made to do sentiment analysis with their goal being either speed or reducing naivety in conducting these types of analysis.
+
+## Variable Relationships
+```{r echo=FALSE}
+genre1 <- str_replace_all(moviedata$genres, "\\,.*","" )
+moviedata$genre1 = genre1
+mod = lm(moviedata$gross ~ moviedata$rating)
+```
+
+```{r, echo=FALSE, fig.width=7, fig.height=8}
+gg = ggplot(moviedata, aes(rating, gross)) + geom_point(aes(color=genre1)) + scale_y_continuous(labels = dollar) + ggtitle("Gross Revenue by Average Movie Rating") + xlab("Average Movie Rating") + ylab("Gross Revenue")
+
+gg = gg + geom_text_repel(data=moviedata %>% filter((gross>750000000) | (rating>=9)), aes(label=title), size = 3, box.padding = unit(0.5, "lines"))
+
+zz = ggplot(moviedata, aes(rating, gross)) + geom_point(aes(color=genre1)) + scale_y_continuous(trans = "log10", labels = dollar) + ggtitle("Gross Revenue by Average Movie Rating") + xlab("Average Movie Rating") + ylab("Gross Revenue")
+
+
+gg
+zz
+```
+The question I wanted to know for my final plot was how much of a correlation there was between a movies average rating and its gross revenue.  Moreover I was curious whether or not any specific genres appeared to have overall higher grossing, or overall higher ratings.  I initially tried doing both log and square root transformations on the y-axis however when I did these they didn't disperse the data points as much as just move them all to the top of the graph (I think its more interesting personally to see the outliers at the top than the bottom).  I did create a simple linear model which suggested that there is a positive correlation between a movies average rating and its gross revenue, however this model had an extremely weak r squared value of 0.013.  Upon further analysis and implementation of a log transformation to account for right tailed skew, the model became even weaker.  Because of this I ended up removing the linear model line from the graph as I thought it could be somewhat misleading.  
+
+As for incorporating genres, I first removed all but the first genre listed for each movie (this could be somewhat misleading because I wasn't sure if the first listing was its main genre, or if they were alphabetized).  From the graph above, while it is hard to tell apart many of the lower rated/grossing movies, the highest grossing movies appeared to be mostly action while the highest rated movies appeared to be mostly dramas.  For the sake of seeing how those at the bottom correlated with genre, I included one additional graph with a log transformation of the y axis.  From this secondary graph there does not appear to be any sort of pattern as far as genres in relation to low grossing.  
+
+In both instances it should be noted that the graphs do not contain all 999 movies as 307 of them were missing values for gross revenue.  Because of this the graph only contains those 692 movies with both average rating and gross revenue values

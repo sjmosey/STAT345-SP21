@@ -1,0 +1,128 @@
+
+```{r}
+# gathering needed libraries
+library(tidyverse)
+library(rvest)
+library(dplyr)
+library(stringr)
+library(rebus)
+library(magrittr)
+library(purrr)
+```
+
+```{r}
+# creating a sequence of numbers (1, 51, 101....)
+pages = seq(from=1, to=951, by = 50)
+
+# compiling list of URLS for each page of 50 movies
+all_urls = paste0("https://www.imdb.com/search/title/?groups=top_1000&start=", pages)
+
+# Gathering titles for all movies and then gathering list of their URL tt's
+titles = map(all_urls, ~.x %>% read_html %>%
+           html_nodes(".lister-item-header a") %>% html_attrs)
+
+# creating 1 list of all 1000 tt's and then removing un-needed parts
+newlist = unlist(titles, recursive = FALSE)
+URL <- str_replace_all(newlist,"/title/","")
+URL <- str_replace_all(URL, "\\/.*","" )
+
+# creating list of individual movie URL's
+movie_links = paste("https://www.imdb.com/title/", URL, sep="")
+```
+
+# Compiling and Cleaning
+
+```{r}
+all_ratings = map(movie_links, ~.x %>% read_html %>%
+           html_nodes(".small"))
+
+
+```
+
+```{r}
+# list of titles
+movie_titles = map(movie_links, ~.x %>% read_html %>%
+           html_nodes("h1"))
+```
+
+
+
+```{r}
+# list of average ratings
+movie_ratings = map(movie_links, ~.x %>% read_html %>%
+                      html_nodes("strong span"))
+```
+
+
+
+```{r}
+# release year
+Movie_release_date = map(movie_links, ~.x %>% read_html %>%
+                      html_nodes("#titleYear a"))
+
+
+```
+
+```{r}
+# revenue
+movie_revenue = map(movie_links, ~.x %>% read_html %>%
+                      html_nodes(".txt-block:nth-child(14)"))
+```
+
+```{r}
+# movie budget
+movie_budgets = map(movie_links, ~.x %>% read_html %>%
+                      html_nodes(".txt-block:nth-child(12)")) 
+
+```
+
+```{r}
+# genre
+movie_genres = map(movie_links, ~.x %>% read_html %>%
+                      html_nodes(".txt-block~ .canwrap a"))
+
+```
+
+```{r}
+# top billed actors
+movie_actors = map(movie_links, ~.x %>% read_html %>%
+                      html_nodes(".even:nth-child(5) .primary_photo+ td a , .odd:nth-child(4) .primary_photo+ td a , .even:nth-child(3) .primary_photo+ td a , .odd:nth-child(2) .primary_photo+ td a"))
+```
+
+```{r}
+# titles cleaned
+titles1 = map(movie_titles, ~.x %>% html_text)
+```
+
+```{r}
+# rating cleaned
+ratings1 = map(movie_ratings, ~.x %>% html_text)
+```
+
+```{r}
+# release year cleaned
+release1 = map(Movie_release_date, ~.x %>% html_text)
+```
+
+```{r}
+# actors cleaned
+actors1 = map(movie_actors, ~.x %>% html_text)
+```
+
+```{r}
+# budget cleaned
+budget1 = map(movie_budgets, ~.x %>% html_text)
+if(length(budget1)==0) budget1 <- NA
+```
+
+```{r}
+# genres cleaned
+genres1 = map(movie_genres, ~.x %>% html_text)
+```
+
+```{r}
+# revenue cleaned
+revenue1 = map(movie_revenue, ~.x %>% html_text)
+if(length(revenue1)==0) revenue1 <- NA
+```
+
